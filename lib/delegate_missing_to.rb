@@ -40,6 +40,13 @@ module DelegateMissingTo
         end
 
         alias_method_chain :method_missing, "delegation_to_#{object_name}"
+
+        define_method "respond_to_with_delegation_to_#{object_name}?" do |symbol, include_all = false|
+          send("respond_to_without_delegation_to_#{object_name}?", symbol, include_all) ||
+            send(object_name).respond_to?(symbol)
+        end
+
+        alias_method_chain :respond_to?, "delegation_to_#{object_name}"
       end
     end
   end
