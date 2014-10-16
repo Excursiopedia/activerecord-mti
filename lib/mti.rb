@@ -28,9 +28,6 @@ module ActiveRecord::Mti
       class_attribute :mti_name
       self.mti_name = self.to_s.underscore.to_sym
 
-      @@base_instance_mode = false
-      @@base_instance_mode_lock = Mutex.new
-
       # Always fetch with the implementation
       default_scope lambda { includes(mti_name) }
 
@@ -44,7 +41,7 @@ module ActiveRecord::Mti
       # Return the base class object when in "base instance mode"
       # and the implementation object otherwise
       def self.instantiate(*_)
-        if @@base_instance_mode
+        if Thread.current[:base_instance_mode]
           super
         else
           super.public_send(mti_name)
@@ -53,11 +50,9 @@ module ActiveRecord::Mti
 
       # Thread safe execution of a block in a "base instance mode"
       def self.as_base_instance
-        @@base_instance_mode_lock.synchronize do
-          @@base_instance_mode = true
-          result = yield
-          @@base_instance_mode = false
-          result
+        Thread.current[:base_instance_mode] = true
+        yield.tap do
+          Thread.current[:base_instance_mode] = false
         end
       end
     end
