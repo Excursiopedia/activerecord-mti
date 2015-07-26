@@ -88,7 +88,8 @@ module ActiveRecord::Mti
       alias_method_chain mti_base_name, :autobuild              # alias_method_chain :role, :autobuild
 
       # Delegate attributes
-      if ActiveRecord::Base.connection.table_exists?(mti_base)
+      mti_base_table_name = ActiveModel::Naming.plural(mti_base)
+      if ActiveRecord::Base.connection.table_exists?(mti_base_table_name)
         mti_base.content_columns.map(&:name).each do |attr|
           delegate attr, "#{attr}=", "#{attr}?",
                    :to => mti_base_name.to_sym
